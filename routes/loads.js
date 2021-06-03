@@ -12,14 +12,14 @@ router.use(bodyParser.json());
 
 /* ----------- Begin Model Functions ----------- */
 
-function post_load(volume) {
+function post_load(name, volume, destination) {
     const key = datastore.key(LOAD);
-    const new_load = {"volume": volume, "carrier": {}};
+    const new_load = {"name": name, "volume": volume, "destination": destination, "carrier": {}};
     return datastore.save({"key": key, "data": new_load}).then(() => {return key});
 }
 
 function get_all_loads(req) {
-	let q = datastore.createQuery(LOAD).limit(3);
+	let q = datastore.createQuery(LOAD).limit(5);
 	const results = {};
 	if (Object.keys(req.query).includes('cursor')) {
 		q = q.start(decodeURIComponent(req.query.cursor));
@@ -27,6 +27,8 @@ function get_all_loads(req) {
 
 	return datastore.runQuery(q).then((entities) => {
 		results.items = entities[0].map(ds.fromDatastore);
+        console.log(results.items);
+        console.log(results.items.length);
 		if (entities[1].moreResults !== ds.Datastore.NO_MORE_RESULTS) {
 			results.next = req.protocol + '://' + req.get('host') + req.baseUrl + '?cursor=' + encodeURIComponent(entities[1].endCursor);
 		}
@@ -80,10 +82,10 @@ router.get('/', (req, res) => {
 });
 
 router.post('/', (req, res) => {
-    if (req.body.volume === undefined) {
+    if (req.body.name === undefined || req.body.volume === undefined || req.body.destination === undefined) {
         res.status(400).send({"Error": "The request object is missing at least one of the required attributes"})   
     } else {
-        const load = post_load(req.body.volume).then((key) => {
+        const load = post_load(req.body.name, req.body.volume, req.body.destination).then((key) => {
             res.status(201).send({
                 "id": key.id,
                 "self": req.protocol + "://" + req.get('host') + "/loads/" + key.id

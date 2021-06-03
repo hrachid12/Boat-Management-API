@@ -19,7 +19,7 @@ const post_boat = (name, type, length) => {
 }
 
 const get_all_boats= (req) => {
-	let q = datastore.createQuery(BOAT).limit(3);
+	let q = datastore.createQuery(BOAT).limit(5);
 	const results = {};
 	if (Object.keys(req.query).includes('cursor')) {
 		q = q.start(decodeURIComponent(req.query.cursor));
