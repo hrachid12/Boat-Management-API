@@ -1,14 +1,30 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const router = express.Router();
+const dotenv = require('dotenv');
+const jwt = require('express-jwt');
+const jwksRsa = require('jwks-rsa');
+
 const ds = require('../datastore/datastore');
 const ld = require('./loads');
-
 const datastore = ds.datastore;
-
 const BOAT = 'Boat';
 
 router.use(bodyParser.json());
+
+dotenv.config();
+
+const checkJwt = jwt({
+    secret      : jwksRsa.expressJwtSecret({
+        cache                   : true,
+        rateLimit               : true,
+        jwksRequestsPerMinute   : 5,
+        jwksUri                 : `https://${process.env.AUTH0_DOMAIN}/.well-known/jwks.json`
+    }),
+
+    issuer      : `https://${process.env.AUTH0_DOMAIN}/`,
+    algorithms  : [ 'RS256' ]
+});
 
 /* ----------- Begin Model Functions ----------- */
 
@@ -79,45 +95,135 @@ const remove_load_from_boat = (bid, lid, boat)  => {
 /* ----------- Begin Controller Functions ----------- */
 
 router.get('/', (req, res) => {
-	const boats = get_all_boats(req).then((ret_obj) => {
-        ret_obj.items.forEach( (el) => {
-            el.self = req.protocol + "://" + req.get('host') + req.baseUrl + "/" + el.id;
+    const accepts = req.accepts(['application/json']);
+    if (!accepts) {
+        res.status(406).send({"Error": "Not acceptable."});
+    } else if (accepts === 'application/json') {
+        const boats = get_all_boats(req).then((ret_obj) => {
+            ret_obj.items.forEach( (el) => {
+                el.self = req.protocol + "://" + req.get('host') + req.baseUrl + "/" + el.id;
 
-            el.loads.forEach((load) => {
-                load.self = req.protocol + "://" + req.get('host') + "/loads/" + load.id;
+                el.loads.forEach((load) => {
+                    load.self = req.protocol + "://" + req.get('host') + "/loads/" + load.id;
+                })
             })
-        })
-		res.status(200).json(ret_obj);
-	});
+            res.status(200).json(ret_obj);
+        });
+    }
 });
 
 router.post('/', (req, res) => {
-    if (req.body.name === undefined || req.body.type === undefined || req.body.length === undefined) {
-        res.status(400).send({"Error": "The request object is missing at least one of the required attributes"})   
+    if (req.get('content-type') !== 'application/json') {
+        res.status(415).send({"Error": "Server only accepts application/json data."});
+    } else if (req.body.name === undefined || req.body.type === undefined || req.body.length === undefined) {
+        res.status(400).send({"Error": "The request object is missing at least one of the required attributes."})   
+    } else if (req.body.name === null || req.body.type === null || req.body.length === null) {
+        res.status(400).send({"Error": "At least one attribute with invalid value of null."}); 
     } else {
-        const boat = post_boat(req.body.name, req.body.type, req.body.length).then((key) => {
-            res.status(201).send({
-                "id": key.id,
-                "self": req.protocol + "://" + req.get('host') + "/boats/" + key.id
+        const accepts = req.accepts(['application/json']);
+        if (!accepts) {
+            res.status(406).send({"Error": "Not acceptable."});
+        } else if (accepts === 'application/json') {
+            const boat = post_boat(req.body.name, req.body.type, req.body.length).then((key) => {
+                res.status(201).send({
+                    "id": key.id,
+                    "self": req.protocol + "://" + req.get('host') + "/boats/" + key.id
+                });
             });
-	    });
+        }
     }
 });
 
 router.get('/:bid', (req, res) => {
-    const boat = get_boat(req.params.bid).then( (boat) => {
-        if (boat) {
-            boat.self = req.protocol + "://" + req.get('host') + req.baseUrl + "/" + boat.id;
+    const accepts = req.accepts(['application/json']);
+    if (!accepts) {
+        res.status(406).send({"Error": "Not acceptable."});
+    } else if (accepts === 'application/json') {
+        const boat = get_boat(req.params.bid).then( (boat) => {
+            if (boat) {
+                boat.self = req.protocol + "://" + req.get('host') + req.baseUrl + "/" + boat.id;
 
-            boat.loads.forEach((load) => {
-                load.self = req.protocol + "://" + req.get('host') + "/loads/" + load.id;
+                boat.loads.forEach((load) => {
+                    load.self = req.protocol + "://" + req.get('host') + "/loads/" + load.id;
+                });
+
+                res.status(200).json(boat);
+            } else {
+                res.status(404).send({ "Error": "No boat with this boat_id exists"});
+            }
+        })
+    }
+});
+
+router.put('/:bid', (req, res) => {
+    if (req.get('content-type') !== 'application/json') {
+        res.status(415).send({"Error": "Server only accepts application/json data."});
+    } else if (req.body.name === undefined || req.body.type === undefined || req.body.length === undefined) {
+        res.status(400).send({"Error": "The request object is missing at least one of the required attributes."})   
+    } else if (req.body.name === null || req.body.type === null || req.body.length === null) {
+        res.status(400).send({"Error": "At least one attribute with invalid value of null."})   
+    } else {
+        const accepts = req.accepts(['application/json']);
+        if (!accepts) {
+            res.status(406).send({"Error": "Not acceptable."});
+        } else if (accepts === 'application/json') {
+            get_boat(req.params.bid).then((old_boat) => {
+                if (old_boat) {
+                    update_load(req.body.name, req.body.type, req.body.length, old_boat.loads, req.params.bid)
+                    .then((key) => {
+                        res.status(201).send({
+                            "id": key.id,
+                            "self": req.protocol + "://" + req.get('host') + "/boats/" + key.id
+                        });
+                    });
+                } else {
+                    res.status(404).send({"Error": "No boat with this boat_id exists."})
+                }
             });
-
-            res.status(200).json(boat);
-        } else {
-            res.status(404).send({ "Error": "No boat with this boat_id exists"});
         }
-    })
+    }
+});
+
+router.patch('/:bid', (req, res) => {
+    if (req.get('content-type') !== 'application/json') {
+        res.status(415).send({"Error": "Server only accepts application/json data."});
+    } else if (req.body.name === null || req.body.type === null || req.body.length === null) {
+        res.status(400).send({"Error": "At least one attribute with invalid value of null."})   
+    } else {
+        const accepts = req.accepts(['application/json']);
+        if (!accepts) {
+            res.status(406).send({"Error": "Not acceptable."});
+        } else if (accepts === 'application/json') {
+            let new_name = req.body.name;
+            let new_type = req.body.type;
+            let new_length = req.body.length;
+
+            get_load(req.params.lid).then((old_boat) => {
+                if (old_load) {
+                    
+                    if (new_name === undefined) {
+                        new_name = old_boat.name;
+                    }
+                    if (new_type === undefined) {
+                        new_type = old_boat.type;
+                    }
+                    if (new_length === undefined) {
+                        new_length = old_boat.length;
+                    }
+
+                    update_load(new_name, new_volume, new_length, old_boat.loads, req.params.bid)
+                    .then((key) => {
+                        res.status(201).send({
+                            "id": key.id,
+                            "self": req.protocol + "://" + req.get('host') + "/boats/" + key.id
+                        });
+                    });
+                } else {
+                    res.status(404).send({"Error": "No boat with this boat_id exists."})
+                }
+            });
+        }
+    }
 });
 
 router.delete('/:bid', (req, res) => {
@@ -131,18 +237,18 @@ router.delete('/:bid', (req, res) => {
             
             delete_boat(boat.id).then(res.status(204).end());
         } else {
-            res.status(404).send({"Error": "No boat with this boat_id exists"});
+            res.status(404).send({"Error": "No boat with this boat_id exists."});
         }
     });
 });
 
-router.patch('/:bid/loads/:lid', (req, res) => {
+router.put('/:bid/loads/:lid', (req, res) => {
     ld.get_load(req.params.lid).then((load) => {
         if (load) {
             get_boat(req.params.bid).then((boat) => {
                 if (boat) {
                     if (load.carrier.id !== undefined) {
-                        res.status(403).send({"Error": "This load is already assigned to a boat"});
+                        res.status(403).send({"Error": "This load is already assigned to a boat."});
                     } else {
                         ld.add_to_carrier(boat.id, load.id, load);
                         add_load_to_boat(boat.id, load.id, boat).then((new_boat) => {
@@ -154,12 +260,12 @@ router.patch('/:bid/loads/:lid', (req, res) => {
                         })
                     }
                 } else {
-                    res.status(404).send({"Error": "No such boat or load exists"});
+                    res.status(404).send({"Error": "No such boat or load exists."});
                 }
             });
             
         } else {
-            res.status(404).send({"Error": "No such boat or load exists"});
+            res.status(404).send({"Error": "No such boat or load exists."});
         }
     });
 });
@@ -170,7 +276,7 @@ router.delete('/:bid/loads/:lid', (req, res) => {
             get_boat(req.params.bid).then((boat) => {
                 if (boat) {
                     if (load.carrier.id === undefined) {
-                        res.status(404).send({"Error": "This load is not assigned to a carrier"});
+                        res.status(404).send({"Error": "This load is not assigned to a carrier."});
                     } else {
                         ld.remove_from_carrier(load.id, load);
                         remove_load_from_boat(boat.id, load.id, boat).then((key) => {
@@ -178,12 +284,12 @@ router.delete('/:bid/loads/:lid', (req, res) => {
                         });
                     }
                 } else {
-                    res.status(404).send({"Error": "No such boat or load exists"});
+                    res.status(404).send({"Error": "No such boat or load exists."});
                 }
             });
             
         } else {
-            res.status(404).send({"Error": "No such boat or load exists"});
+            res.status(404).send({"Error": "No such boat or load exists."});
         }
     })
 })
@@ -197,7 +303,7 @@ router.get('/:bid/loads', (req, res) => {
 
             res.status(200).send({"loads": boat.loads});
         } else {
-            res.status(404).send({ "Error": "No boat with this boat_id exists"});
+            res.status(404).send({ "Error": "No boat with this boat_id exists."});
         }
     })
 });
