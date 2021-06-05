@@ -1,0 +1,30 @@
+<div class="main_div">
+    {{#if body.access_token}}
+        <div>
+            <p>Access token: {{body.access_token}} </p>
+        </div>
+
+        <div>
+            <p>ID Token: {{body.id_token}}</p>
+        </div>
+
+        <div>
+            <p>Scope: {{body.scope}}</p>
+        </div>
+
+        <div>
+            <p>Expires in: {{body.expires_in}} seconds</p>
+        </div>
+
+        <div>
+            <p>Token Type: {{body.token_type}}</p>
+        </div>
+    {{else}}
+        <div>
+            <p>Credentials invalid, please try again</p>
+            <form action="/login" method="GET">
+                <button type="stubmit">Try Again</button>
+            </form>
+        </div>
+    {{/if}}
+</div>

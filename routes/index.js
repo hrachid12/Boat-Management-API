@@ -9,10 +9,8 @@ router.use('/loads', require('./loads'));
 router.use('/users', require('./users'));
 router.use('/', require('./auth'));
 
-router.get('/', function(req, res, next) {
-	// res.render('index', { title: 'CS493 Final Project' });
-
-	res.render('home', { user: res.locals.user });
-});
+router.get('/', (req, res) => {
+	res.render('home');
+})
 
 module.exports = router;

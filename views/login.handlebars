@@ -1,0 +1,32 @@
+
+{{#if msg}}
+    <div class="main_div border">
+        <p>{{msg}}</p>
+    </div>
+{{/if}}
+
+<div class="main_div border">
+    <h1>Login Page</h1>
+    <form method="POST" action="/user" enctype="multipart/form-data">
+        <div>
+            <label for="username">Email: </label>
+            <input id="username" name="username" type="text" required>
+        </div>
+
+        <div>
+            <label for="password">Password: </label>
+            <input type="password" name="password" id="password" required>
+        </div>
+
+        <div>
+            <button type="submit">Login</button>
+        </div>
+    </form>
+</div>
+
+<div class="main_div border">
+    <form method="GET" action="/signup">
+    <h3>Create Account</h3>
+        <button type="submit">Create Account</button>
+    </form>
+</div>

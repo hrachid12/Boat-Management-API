@@ -1,0 +1,26 @@
+
+<div class="main_div border">
+    <h1>User Signup</h1>
+    <form method="POST" action="/signup" enctype="multipart/form-data">
+        <div>
+            <label for="username">Email: </label>
+            <input id="username" name="username" type="text" required>
+        </div>
+
+        <div>
+            <label for="password">Password: </label>
+            <input type="password" name="password" id="password" required>
+        </div>
+
+        <div>
+            <button type="submit">Signup</button>
+        </div>
+    </form>
+</div>
+
+<div class="main_div border">
+    <h3>Login</h3>
+    <form method="GET" action="/login">
+        <button type="submit">Login</button>
+    </form>
+</div>

@@ -1,8 +1,16 @@
-{{#if locals.user}} 
-    <h1>hehexd</h1>
-{{else}}
-    <h1>no</h1>
+<div class="main_div border">
+    <p>Welcome to my implementation of CS 493 Final Project</p>
+    <p>You can start by logging in or creating a new account below.</p>
+</div>
+
+<div class="main_div border">
     <form method="GET" action="/login">
         <button type="submit">Login</button>
     </form>
-{{/if}}
+</div>
+
+<div class="main_div border">
+    <form method="GET" action="/signup">
+        <button type="submit">Signup</button>
+    </form>
+</div>

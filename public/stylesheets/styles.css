@@ -1,0 +1,16 @@
+.main_div {
+    margin: 0 auto;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    width: 35rem;
+    overflow-wrap:break-word;
+}
+
+.border {
+    border: 2px solid black;
+}
+
+body {
+    background: #ddd;
+}
