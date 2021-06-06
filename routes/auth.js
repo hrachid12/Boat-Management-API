@@ -19,20 +19,9 @@ router.get('/login', (req, res) => {
 	res.render('login');
 });
 
-router.get(
-	'/user',
-	checkJwt,
-	(err, req, res, next) => {
-		res.redirect('/login');
-	},
-	(req, res) => {
-		if (!req.JWTError) {
-			console.log(req);
-		} else {
-			res.redirect('/login');
-		}
-	}
-);
+router.get('/user', (req, res) => {
+	res.redirect('/login');
+});
 
 router.post('/user', upload.none(), (req, res) => {
 	const username = req.body.username;
@@ -54,10 +43,36 @@ router.post('/user', upload.none(), (req, res) => {
 		if (error) {
 			res.status(500).send(error);
 		} else {
-			res.render('JWT', { body: body });
+			let options_new = {
+				method  : 'POST',
+				url     : req.protocol + '://' + req.get('host') + req.baseUrl + `/get_id`,
+				headers : { 'content-type': 'application/json', Authorization: `Bearer ${body.id_token}` },
+				body    : {},
+				json    : true
+			};
+			request(options_new, (error_new, response_new, body_new) => {
+				res.render('JWT', { body: body, user: body_new.user });
+			});
 		}
 	});
 });
+
+router.post(
+	'/get_id',
+	checkJwt,
+	(err, req, res, next) => {
+		if (err.name === 'UnauthorizedError') {
+			res.redirect('/login');
+		}
+	},
+	(req, res) => {
+		if (!req.JWTError) {
+			res.status(200).send({ user: req.user });
+		} else {
+			res.send('try again');
+		}
+	}
+);
 
 router.get('/signup', (req, res) => {
 	res.render('create_acc');
@@ -85,31 +100,6 @@ router.post('/signup', upload.none(), (req, res) => {
 			res.render('login', { msg: body.error });
 		} else {
 			res.render('login', { msg: 'Account creation successful. Please login below.' });
-		}
-	});
-});
-
-router.post('/login_api', upload.none(), (req, res) => {
-	const username = req.body.username;
-	const password = req.body.password;
-	var options = {
-		method  : 'POST',
-		url     : `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
-		headers : { 'content-type': 'application/json' },
-		body    : {
-			grant_type    : 'password',
-			username      : username,
-			password      : password,
-			client_id     : process.env.AUTH0_CLIENT_ID,
-			client_secret : process.env.AUTH0_CLIENT_SECRET
-		},
-		json    : true
-	};
-	request(options, (error, response, body) => {
-		if (error) {
-			res.status(500).send(error);
-		} else {
-			res.send(body);
 		}
 	});
 });

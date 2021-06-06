@@ -1,30 +1,44 @@
-<div class="main_div">
-    {{#if body.access_token}}
-        <div>
-            <p>Access token: {{body.access_token}} </p>
-        </div>
-
-        <div>
-            <p>ID Token: {{body.id_token}}</p>
-        </div>
-
-        <div>
-            <p>Scope: {{body.scope}}</p>
-        </div>
-
-        <div>
-            <p>Expires in: {{body.expires_in}} seconds</p>
-        </div>
-
-        <div>
-            <p>Token Type: {{body.token_type}}</p>
-        </div>
-    {{else}}
-        <div>
-            <p>Credentials invalid, please try again</p>
-            <form action="/login" method="GET">
-                <button type="stubmit">Try Again</button>
-            </form>
-        </div>
-    {{/if}}
+{{#if body.access_token}}
+<div class="main_div border">
+    <p>Use the ID Token (JWT) to make requests to protected resources through PostMan</p>
+    <p>The Unique User ID is what will be used to distinguish users from one another.</p>
+    <p>NOTE: These webpages are NOT connected to the API. So, logging in or creating a user account does not create a user entity for the API.</p>
+    <p>You MUST send a post request to '/users' with the proper authorization to create a user entity for this user account.</p>
 </div>
+
+<div class="main_div border">
+    <div>
+        <p><b>Access token:</b> {{body.access_token}} </p>
+    </div>
+
+    <div>
+        <p><b>ID Token (JWT):</b> {{body.id_token}}</p>
+    </div>
+
+    <div>
+        <p><b>Unique User ID (sub)</b>: {{user.sub}}</p>
+    </div>
+
+    <div>
+        <p><b>Scope</b>: {{body.scope}}</p>
+    </div>
+
+    <div>
+        <p><b>Expires in</b>: {{body.expires_in}} seconds</p>
+    </div>
+
+    <div>
+        <p><b>Token Type</b>: {{body.token_type}}</p>
+    </div>
+</div>
+{{else}}
+<div class="main_div border">
+    <div>
+        <p>Credentials invalid, please try again</p>
+        <form action="/login" method="GET">
+            <button type="submit">Try Again</button>
+        </form>
+    </div>
+</div>
+{{/if}}
+
