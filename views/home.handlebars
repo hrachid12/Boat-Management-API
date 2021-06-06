@@ -3,9 +3,9 @@
     <p>You can start by logging in or creating a new account below.</p>
 
     <h2>Instructions</h2>
-    <p>Users must be created manually if they do not exist as an entity already within datastore. In other words, if you are testing with accounts you are creating, their entities will not exist and you must manually send a POST request following the API spec to '/users' using Postman so that user entities can be created.</p>
+    <p>Users must be created manually if they do not exist as an entity already within datastore. In other words, if you are testing with accounts that you are creating instead of the ones shown above, then their entities will not exist in datastore, and they must be created.</p>
     <p>If this is not done, ALL tests for protected endpoints will FAIL.</p>
-    <p>So, please, once you create each user and login, copy the JWT and Unique User ID into jwt(1 or 2) and user_id(1 or 2). Then, to create the user entity, all you must do is a send a POST request to '/users' with jwt(1 or 2) in the authorization header (set to bearer token).</p>
+    <p>So, please, once you create each user and login, copy their JWT and Unique User ID into a jwt/user_id pair. From there, the test collection should create the entities if they do not exist already. If that doesn’t work, then manually send a POST request to ‘/users’ with the bearer type jwt in the authorization header.</p>
 </div>
 
 <div class="main_div border">

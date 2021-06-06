@@ -178,10 +178,12 @@ router.post(
 								req.body.length,
 								req.user.sub
 							).then((key) => {
-								res.status(201).send({
-									id   : key.id,
-									self : req.protocol + '://' + req.get('host') + '/boats/' + key.id
-								});
+								us.add_boat_to_user(key.id, user.id, user).then(() => {
+									res.status(201).send({
+										id   : key.id,
+										self : req.protocol + '://' + req.get('host') + '/boats/' + key.id
+									});
+								})
 							});
 						} else {
 							res.status(403).send({ Error: 'You must first create a user entity with this JWT.' });
@@ -394,6 +396,8 @@ router.delete(
 										ld.remove_from_carrier(load.id, load);
 									});
 								});
+
+								us.remove_boat_from_user(boat.id, user.id, user);
 
 								delete_boat(boat.id).then(res.status(204).end());
 							} else {

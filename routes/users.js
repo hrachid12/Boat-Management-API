@@ -34,6 +34,37 @@ function post_user(unique_sub) {
 		return key;
 	});
 }
+
+async function add_boat_to_user(bid, uid, user) {
+	const key = datastore.key([ USER, parseInt(uid, 10) ]);
+	user.boats.push({ id: bid });
+	const new_user = { sub: user.sub, boats: user.boats };
+	await datastore.save({ key: key, data: new_user });
+
+	const q = datastore.createQuery(USER).filter('__key__', '=', key);
+	return datastore.runQuery(q).then((entities) => {
+		return entities[0].map(ds.fromDatastore)[0];
+	});
+}
+
+function remove_boat_from_user(bid, uid, user) {
+	const key = datastore.key([ USER, parseInt(uid, 10) ]);
+	let new_boats = [];
+
+	user.boats.forEach((boat) => {
+		if (boat.id === bid) {
+			return;
+		} else {
+			new_boats.push(boat);
+		}
+	});
+
+	const new_user = { sub: user.sub, boats: new_boats };
+	return datastore.save({ key: key, data: new_user }).then(() => {
+		return key;
+	});
+}
+
 /* ----------- End Model Functions ----------- */
 
 /* ----------- Begin Controller Functions ----------- */
@@ -48,6 +79,8 @@ router.get('/', (req, res) => {
 				el.boats.forEach((boat) => {
 					boat.self = req.protocol + '://' + req.get('host') + '/boats/' + boat.id;
 				});
+
+				el.self = req.protocol + '://' + req.get('host') + '/users/' + el.sub;
 			});
 
 			res.status(200).json(users);
@@ -71,7 +104,7 @@ router.post(
 			} else if (accepts === 'application/json') {
 				check_user_exists(req.user.sub).then((user) => {
 					if (user) {
-						res.status(403).send({"Error": "User already exists."});
+						res.status(403).send({ Error: 'User already exists.' });
 					} else {
 						post_user(req.user.sub).then((key) => {
 							res.status(201).send({
@@ -81,7 +114,7 @@ router.post(
 							});
 						});
 					}
-				})
+				});
 			}
 		} else {
 			res.status(401).send({ Error: 'Invalid JWT.' });
@@ -89,19 +122,19 @@ router.post(
 	}
 );
 
-router.delete('/', (req, res) => {
+router.delete('/:sub', (req, res) => {
 	res.set('Accept', 'GET, POST');
-	res.status(405).end()
+	res.status(405).end();
 });
 
 router.put('/', (req, res) => {
 	res.set('Accept', 'GET, POST');
-	res.status(405).end()
+	res.status(405).end();
 });
 
 router.patch('/', (req, res) => {
 	res.set('Accept', 'GET, POST');
-	res.status(405).end()
+	res.status(405).end();
 });
 
 router.get('/:sub', (req, res) => {
@@ -116,7 +149,7 @@ router.get('/:sub', (req, res) => {
 
 				boat.self = req.protocol + '://' + req.get('host') + '/boats/' + boat.id;
 			});
-			
+
 			res.status(200).json(user);
 		} else {
 			res.status(404).send({ Error: 'No user with this unique sub exists.' });
@@ -128,3 +161,5 @@ router.get('/:sub', (req, res) => {
 
 module.exports = router;
 module.exports.check_user_exists = check_user_exists;
+module.exports.add_boat_to_user = add_boat_to_user;
+module.exports.remove_boat_from_user = remove_boat_from_user;
