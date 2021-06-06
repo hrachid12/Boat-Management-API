@@ -1,7 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const router = express.Router();
-const secured = require('../lib/middleware/secured');
 const ds = require('../datastore/datastore');
 
 const checkJwt = require('../lib/middleware/checkJwt');
