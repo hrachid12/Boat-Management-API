@@ -138,23 +138,27 @@ router.patch('/', (req, res) => {
 });
 
 router.get('/:sub', (req, res) => {
-	check_user_exists(req.params.sub).then((user) => {
-		if (user) {
-			user.self = req.protocol + '://' + req.get('host') + req.baseUrl + '/' + user.sub;
-
-			user.boats.forEach((boat) => {
-				boat.loads.forEach((load) => {
-					load.self = req.protocol + '://' + req.get('host') + '/loads/' + load.id;
+	if (!accepts) {
+		res.status(406).send({ Error: 'Not acceptable.' });
+	} else if (accepts === 'application/json') {
+		check_user_exists(req.params.sub).then((user) => {
+			if (user) {
+				user.self = req.protocol + '://' + req.get('host') + req.baseUrl + '/' + user.sub;
+	
+				user.boats.forEach((boat) => {
+					boat.loads.forEach((load) => {
+						load.self = req.protocol + '://' + req.get('host') + '/loads/' + load.id;
+					});
+	
+					boat.self = req.protocol + '://' + req.get('host') + '/boats/' + boat.id;
 				});
-
-				boat.self = req.protocol + '://' + req.get('host') + '/boats/' + boat.id;
-			});
-
-			res.status(200).json(user);
-		} else {
-			res.status(404).send({ Error: 'No user with this unique sub exists.' });
-		}
-	});
+	
+				res.status(200).json(user);
+			} else {
+				res.status(404).send({ Error: 'No user with this unique sub exists.' });
+			}
+		});
+	}
 });
 
 /* ----------- End Controller Functions ----------- */
